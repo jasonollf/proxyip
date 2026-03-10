@@ -1,0 +1,28 @@
+name: Sync IP List
+on:
+  schedule:
+    - cron: '0 23 * * *' # 每天 UTC 时间 23:00 (北京时间上午 7:00) 自动运行
+  workflow_dispatch: # 允许手动触发更新
+
+jobs:
+  update-sub:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Fetch API and save to file
+        run: |
+          # 抓取 API 结果并覆盖写入 ips.txt
+          curl -s "http://138.2.62.221:8001/api/get?region=TW&type=reverse&key=2XBTiT9TuYLaeTcV" > ips.txt
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add ips.txt
+          # 如果文件有变化则提交，无变化则跳过
+          git commit -m "Auto update IP list" || exit 0
+          git push
